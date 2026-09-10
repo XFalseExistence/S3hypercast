@@ -1,0 +1,50 @@
+name: Build S3 CAST
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK 35
+        run: yes | sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Build debug APK
+        run: gradle -p android assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: S3_CAST_APK_v001
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install ESP32 Arduino core
+        run: |
+          arduino-cli config init
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install esp32:esp32@3.3.0 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+      - name: Compile receiver
+        run: |
+          mkdir -p firmware/build
+          arduino-cli compile \
+            --fqbn 'esp32:esp32:esp32s3:CDCOnBoot=cdc,PSRAM=opi,PartitionScheme=huge_app' \
+            --output-dir firmware/build \
+            firmware/S3_CAST_RECEIVER_v001
+      - uses: actions/upload-artifact@v4
+        with:
+          name: S3_CAST_FIRMWARE_v001
+          path: firmware/build/*
