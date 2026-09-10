@@ -1,0 +1,91 @@
+name: S3 CAST APK v002 FIX
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Show repo files
+        run: |
+          echo "=== ROOT ==="
+          ls -la
+          echo "=== FILE TREE ==="
+          find . -maxdepth 3 -type f | sort
+
+      - name: Find and unpack Android project ZIP
+        shell: bash
+        run: |
+          ZIP="$(find . -maxdepth 2 -type f -name 'S3_CAST_ANDROID*.zip' | head -n 1)"
+          if [ -z "$ZIP" ]; then
+            echo "ERROR: No S3_CAST_ANDROID*.zip found in repository."
+            exit 1
+          fi
+          echo "Using ZIP: $ZIP"
+          rm -rf ci_project
+          mkdir -p ci_project
+          unzip -q "$ZIP" -d ci_project
+          echo "=== UNPACKED ==="
+          find ci_project -maxdepth 5 -type f | sort
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept SDK licenses and install Android 35
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle 8.10.2
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Locate Gradle project
+        id: project
+        shell: bash
+        run: |
+          SETTINGS="$(find ci_project -type f \( -name settings.gradle -o -name settings.gradle.kts \) | head -n 1)"
+          if [ -z "$SETTINGS" ]; then
+            echo "ERROR: Could not find settings.gradle or settings.gradle.kts after unpacking."
+            exit 1
+          fi
+          PROJECT_DIR="$(dirname "$SETTINGS")"
+          echo "Gradle project: $PROJECT_DIR"
+          echo "dir=$PROJECT_DIR" >> "$GITHUB_OUTPUT"
+
+      - name: Build debug APK
+        shell: bash
+        run: |
+          gradle -p "${{ steps.project.outputs.dir }}" assembleDebug --stacktrace
+
+      - name: Find APK
+        id: apk
+        shell: bash
+        run: |
+          APK="$(find ci_project -type f -name '*debug*.apk' | head -n 1)"
+          if [ -z "$APK" ]; then
+            echo "ERROR: Build completed but no debug APK was found."
+            exit 1
+          fi
+          echo "APK found: $APK"
+          echo "path=$APK" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: S3_CAST_APK_v002
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
