@@ -1,0 +1,37 @@
+S3_v0001.9
+HEVEL ANDROID SKIN LOADER
+NESTED SKN -> ALT LIBRARY
+
+TOP LEVEL
+  SKN = main skin family
+
+CHILD
+  ALT = alternate version of the current SKN
+  Laser is an ordinary ALT, not a separate bank.
+
+PHONE APP
+  CREATE SKN
+  ADD ALT
+  rename / duplicate / delete / reorder
+  MOVE ALT between SKNs
+  six POV slots per Base or ALT
+  LOAD POV / LOAD ALT / LOAD SKN / LOAD SELECTED / LOAD ALL
+  ACTIVATE Base / ALT
+  hotspot + numeric shared Wi-Fi
+  raw fixed-length uploads
+  PNG + generated HVS transfer
+  hash skip-unchanged syncing
+
+CURRENT S3_v0001.7 SAFETY
+  The app keeps the remote skin_index.json schema-1 compatible.
+  Top-level SKNs remain in the current SKN cycle.
+  ALT files use unique wire IDs and do not overwrite Base files.
+  ALT wire IDs are staged in legacy LZR so current firmware can activate them.
+  Extra hierarchy metadata is included for the companion firmware update.
+
+PENDING DEVICE-SIDE COMPANION
+  physical SKN / ALT button reassignment
+  ALT cycling under current SKN
+  transient pressed border
+  persistent green custom-skin dot
+  SKN hold -> built-in Default

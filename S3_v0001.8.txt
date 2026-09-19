@@ -1,0 +1,60 @@
+S3_v0001.8
+HEVEL POV SKIN LOADER — ANDROID APP SOURCE
+
+TARGET
+- Android 8.0 / API 26 minimum
+- compile/target SDK 35
+- app id: hevel.skin.loader
+- versionName: S3_v0001.8
+
+S3 CONNECTIONS
+HOTSPOT
+  SSID: HEVEL_SKIN_LOADER
+  password: hevelskins
+  host: 192.168.4.1
+
+SHARED WIFI
+  Use the numeric DHCP IP printed by the S3 Serial log.
+  The current firmware intentionally does not use mDNS.
+
+FEATURES
+- LZR + SKN banks
+- dynamic library, not limited to 13 skins
+- stable skin IDs independent of name/order
+- create / rename / duplicate / delete
+- move between LZR and SKN
+- reorder with arrows or drag/drop
+- six POV slots per skin
+- partial skins supported
+- PNG picker / replace / clear / preview
+- LOAD POV
+- LOAD one skin
+- LOAD SELECTED
+- LOAD ALL SKINS
+- ACTIVATE
+- LOAD & ACTIVATE when not installed
+- SHA-256 hash comparison skips unchanged POV payloads
+- phone generates RGB565+alpha HVS companion for S3 rendering
+- direct raw-body HTTP uploads compatible with current S3 skin server
+- fixed Content-Length on all POST bodies
+- hotspot mode + shared Wi-Fi IP mode
+- EXIT LOADER
+
+BUILD OPTION A — ANDROID STUDIO / ANDROIDIDE
+Open this project folder and build the app debug APK.
+
+BUILD OPTION B — GITHUB
+Put the project contents at the root of a GitHub repo.
+Run the included workflow:
+  .github/workflows/S3_v0001.8.yml
+The workflow publishes an artifact containing:
+  S3_v0001.8.apk
+
+FIRST USE
+1. Enter skin-loader mode on the S3.
+2. Open the app and tap HOTSPOT.
+3. Approve the Android Wi-Fi connection prompt.
+4. Create/import skins and assign PNGs to the six POV slots.
+5. Use LOAD, LOAD POV, LOAD SELECTED, or LOAD ALL SKINS.
+6. ACTIVATE the desired LZR/SKN skin.
+7. EXIT LOADER when finished.
