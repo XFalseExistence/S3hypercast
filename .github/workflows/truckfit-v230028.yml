@@ -1,0 +1,67 @@
+name: Build TruckFit v230028 Recovery APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [truckfit/v230027-mapscan]
+    paths:
+      - 'TruckFit_v230028_RECOVERY_BACKGROUND_SOURCE_UNCOMPILED.zip'
+      - '.github/workflows/truckfit-v230028.yml'
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Install Android SDK command-line tools and SDK 36
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          mkdir -p "$SDK_ROOT/cmdline-tools"
+          curl --fail --location --retry 3 --output /tmp/android-cmdline-tools.zip \
+            https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q /tmp/android-cmdline-tools.zip -d /tmp/android-cmdline-tools
+          mv /tmp/android-cmdline-tools/cmdline-tools "$SDK_ROOT/cmdline-tools/latest"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses >/dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Unpack TruckFit v230028
+        run: |
+          test -f TruckFit_v230028_RECOVERY_BACKGROUND_SOURCE_UNCOMPILED.zip
+          unzip -q TruckFit_v230028_RECOVERY_BACKGROUND_SOURCE_UNCOMPILED.zip -d extracted
+          test -f extracted/android/TruckFitRecovered/app/build.gradle.kts
+          sed -i 's/versionCode = 230025/versionCode = 230028/;s/versionName = "23.0.25-auto-trim-center"/versionName = "23.0.28-recovery-background"/' extracted/android/TruckFitRecovered/app/build.gradle.kts
+          # Distinct application ID: install alongside v230025 without touching its data.
+          sed -i 's/applicationId = "hevel.truckfit.loader"/applicationId = "hevel.truckfit.loader.recoverytest"/' extracted/android/TruckFitRecovered/app/build.gradle.kts
+          sed -i 's/android:label="TruckFit"/android:label="TruckFit 230028 TEST"/' extracted/android/TruckFitRecovered/app/src/main/AndroidManifest.xml
+          grep -q 'applicationId = "hevel.truckfit.loader.recoverytest"' extracted/android/TruckFitRecovered/app/build.gradle.kts
+          grep -q 'android:label="TruckFit 230028 TEST"' extracted/android/TruckFitRecovered/app/src/main/AndroidManifest.xml
+      - name: Build debug APK
+        working-directory: extracted/android/TruckFitRecovered
+        run: |
+          gradle --version || true
+          gradle --no-daemon --stacktrace :app:assembleDebug
+      - name: Verify distinct package ID and rename APK
+        run: |
+          set -euo pipefail
+          APK="extracted/android/TruckFitRecovered/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          AAPT="${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools/36.0.0/aapt"
+          test -x "$AAPT"
+          "$AAPT" dump badging "$APK" | grep '^package:'
+          "$AAPT" dump badging "$APK" | grep -q "name='hevel.truckfit.loader.recoverytest'"
+          mkdir -p verified-apk
+          cp "$APK" verified-apk/TruckFit-230028-TEST-SIDE-BY-SIDE.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TruckFit-v230028-VERIFIED-SIDE-BY-SIDE-APK
+          path: verified-apk/TruckFit-230028-TEST-SIDE-BY-SIDE.apk
+          if-no-files-found: error
