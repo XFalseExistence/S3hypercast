@@ -38,10 +38,10 @@ jobs:
           unzip -q TruckFit_v230028_RECOVERY_BACKGROUND_SOURCE_UNCOMPILED.zip -d extracted
           test -f extracted/android/TruckFitRecovered/app/build.gradle.kts
           sed -i 's/versionCode = 230025/versionCode = 230028/;s/versionName = "23.0.25-auto-trim-center"/versionName = "23.0.28-recovery-background"/' extracted/android/TruckFitRecovered/app/build.gradle.kts
-          # Use the existing v230027 TEST package ID; upgrading still requires matching APK signatures.
-          sed -i 's/applicationId = "hevel.truckfit.loader"/applicationId = "hevel.truckfit.loader.mapscantest"/' extracted/android/TruckFitRecovered/app/build.gradle.kts
+          # Use a new package ID to avoid debug-signature conflicts; this does not migrate existing app data.
+          sed -i 's/applicationId = "hevel.truckfit.loader"/applicationId = "hevel.truckfit.loader.recovery28"/' extracted/android/TruckFitRecovered/app/build.gradle.kts
           sed -i 's/android:label="TruckFit"/android:label="TruckFit 230028 TEST"/' extracted/android/TruckFitRecovered/app/src/main/AndroidManifest.xml
-          grep -q 'applicationId = "hevel.truckfit.loader.mapscantest"' extracted/android/TruckFitRecovered/app/build.gradle.kts
+          grep -q 'applicationId = "hevel.truckfit.loader.recovery28"' extracted/android/TruckFitRecovered/app/build.gradle.kts
           grep -q 'android:label="TruckFit 230028 TEST"' extracted/android/TruckFitRecovered/app/src/main/AndroidManifest.xml
       - name: Build debug APK
         working-directory: extracted/android/TruckFitRecovered
@@ -56,12 +56,12 @@ jobs:
           AAPT="${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools/36.0.0/aapt"
           test -x "$AAPT"
           "$AAPT" dump badging "$APK" | grep '^package:'
-          "$AAPT" dump badging "$APK" | grep -q "name='hevel.truckfit.loader.mapscantest'"
+          "$AAPT" dump badging "$APK" | grep -q "name='hevel.truckfit.loader.recovery28'"
           mkdir -p verified-apk
-          cp "$APK" verified-apk/TruckFit-230028-TEST-SAME-PACKAGE.apk
+          cp "$APK" verified-apk/TruckFit-230028-TEST-SIDE-BY-SIDE.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TruckFit-v230028-VERIFIED-SAME-PACKAGE-APK
-          path: verified-apk/TruckFit-230028-TEST-SAME-PACKAGE.apk
+          name: TruckFit-v230028-VERIFIED-SIDE-BY-SIDE-APK
+          path: verified-apk/TruckFit-230028-TEST-SIDE-BY-SIDE.apk
           if-no-files-found: error
