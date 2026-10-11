@@ -38,6 +38,11 @@ jobs:
           unzip -q TruckFit_v230027_MAPSCAN_RASTER_ORDER_SOURCE_UNCOMPILED.zip -d extracted
           test -f extracted/android/TruckFitRecovered/app/build.gradle.kts
           sed -i 's/versionCode = 230025/versionCode = 230027/;s/versionName = "23.0.25-auto-trim-center"/versionName = "23.0.27-mapscan-raster-order"/' extracted/android/TruckFitRecovered/app/build.gradle.kts
+          # Distinct application ID: install alongside v230025 without touching its data.
+          sed -i 's/applicationId = "hevel.truckfit.loader"/applicationId = "hevel.truckfit.loader.mapscantest"/' extracted/android/TruckFitRecovered/app/build.gradle.kts
+          sed -i 's/android:label="TruckFit"/android:label="TruckFit 230027 TEST"/' extracted/android/TruckFitRecovered/app/src/main/AndroidManifest.xml
+          grep -q 'applicationId = "hevel.truckfit.loader.mapscantest"' extracted/android/TruckFitRecovered/app/build.gradle.kts
+          grep -q 'android:label="TruckFit 230027 TEST"' extracted/android/TruckFitRecovered/app/src/main/AndroidManifest.xml
       - name: Build debug APK
         working-directory: extracted/android/TruckFitRecovered
         run: |
@@ -46,6 +51,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TruckFit-v230027-debug-APK
+          name: TruckFit-v230027-SIDE-BY-SIDE-debug-APK
           path: extracted/android/TruckFitRecovered/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
