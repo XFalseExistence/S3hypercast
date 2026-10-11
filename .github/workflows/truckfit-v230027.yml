@@ -20,9 +20,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
-      - uses: android-actions/setup-android@v3
       - name: Install Android SDK 36
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
       - name: Unpack TruckFit v230027
         run: |
           test -f TruckFit_v230027_MAPSCAN_RASTER_ORDER_SOURCE_UNCOMPILED.zip
